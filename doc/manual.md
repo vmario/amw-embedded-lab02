@@ -1,6 +1,6 @@
 ---
 title: "Instrukcja laboratorium systemów wbudowanych"
-subtitle: "Ćwiczenie 1: Odczyt i zapis GPIO"
+subtitle: "Ćwiczenie 2: Przerwania GPIO"
 author: [Mariusz Chilmon <<mariusz.chilmon@ctm.gdynia.pl>>]
 lang: "pl"
 titlepage: yes
@@ -18,54 +18,59 @@ header-includes: |
 
 Celem ćwiczenia jest zapoznanie się z:
 
-* budową cyfrowych portów I/O, czyli GPIO (_General-Purpose Input/Output_),
-* podstawowymi rejestrami sterującymi tymi portami,
-* operatorami bitowymi.
+* bezsensewnością odmierzania czasu w pętli głównej,
+* korzyściami z wykorzystania przerwań,
+* konfiguracją przerwań GPIO,
+* uruchamianiem podsystemu przerwań,
+* makrem `ISR()` do obsługi przerwań w AVR-GCC.
 
 # Uruchomienie programu wyjściowego
 
-1. Podłącz diodę `LED1` do pinu `PC0` portu `PORTC`.
-1. Zbuduj program i wgraj do mikrokontrolera.
-1. Zweryfikuj, czy dioda `LED1` zaświeciła się.
+1. Podłącz diody `LED1`…`LED2` do pinów `PC0`…`PC1` portu `PORTC`.
+1. Podłącz przyciski `KEY1` do pinu `PD2` portu `PORTD`.
+1. Zweryfikuj, czy dioda `LED1` mruga.
+1. Zweryfikuj, czy dioda `LED2` zaświeca się po wciśnięciu przycisku `KEY1`.
 
-\awesomebox[purple]{2pt}{\faMicrochip}{purple}{Zauważ, że diodę zaświeca stan niski, czyli logiczne \lstinline{0}. Wynika to z tego, że jedna nóżka diody (anoda) podłączona jest na stałe do dodatniej szyny zasilania, a do zaświecenia potrzebne jest jeszcze podłączenie ujemnej szyny zasilania do drugiej nóżki (katody).}
+\awesomebox[teal]{2pt}{\faCode}{teal}{Zauważ, że dioda \lstinline{LED2} na ogół zaświeca się i gaśnie z opóźnieniem. Wynika to z~tego, że stan przycisku sprawdzany jest tylko co jakiś czas, między wykonaniami funkcji \lstinline{heartBit()}.}
 
-\awesomebox[violet]{2pt}{\faBook}{violet}{Zapoznaj się z opisem portów I/O, w szczególności rejestru \lstinline{DDR} (\textit{Data Direction Register}), decydującego o kierunku poszczególnych pinów w porcie, tj. konfigurującego piny jako wejścia lub wyjścia.}
-
-\awesomebox[teal]{2pt}{\faCode}{teal}{Po wskazaniu kursorem makra \lstinline{_BV()} zobaczysz jego rozwinięcie. Zwróć uwagę na wykorzystanie operatora przesunięcia bitowego \lstinline{<<} w celu ustawienia bitu o zadanym numerze.}
+\awesomebox[teal]{2pt}{\faCode}{teal}{Funkcja \lstinline{heartBit()} symuluje wykonywanie przez pętlę główną złożonego programu. W rzeczywistości funkcja ta prawie całą moc obliczeniową mikrokontrolera zużywa na odmierzanie czasu w funkcji bibliotecznej \lstinline{_delay_ms()}. Jak widzisz, odmierzanie czasu w ten sposób jest bardzo problematyczne.}
 
 # Zadanie podstawowe
 
-## Konfiguracja sprzętowa
+## Modyfikacja programu
 
-1. Podłącz przycisk `KEY1` do pinu `PD3` portu `PORTD`.
+1. Przenieś wywołanie funkcji `handleKey()` z pętli głównej do obsługi przerwania `INT0`, czyli funkcji `ISR(INT0_vect)`.
+1. W funkcji `interruptsInitialize()` umieść:
+   1. konfigurację przerwania `INT0` reagującą zarówno na zbocze opadające, jak i narastające;
+   1. odblokowanie maski przerwania `INT0`;
+   1. odblokowanie globalnej maski przerwań.
 
-\awesomebox[purple]{2pt}{\faMicrochip}{purple}{Zauważ, że wciśnięcie przycisku zwiera pin mikrokontrolera do ujemnej szyny zasilania, więc znów stanem aktywnym okazuje się \lstinline{0}.}
+\awesomebox[violet]{2pt}{\faBook}{violet}{Zapoznaj się z rejestrami, które zawierają pola \lstinline{ISC00} (\textit{Interrupt Sense Control}) i \lstinline{INT0} oraz funkcją \lstinline{sei()}.}
+
+\awesomebox[purple]{2pt}{\faMicrochip}{purple}{Piny mikrokontrolera (wybrane lub dowolne, zależnie od możliwości mikrokontrolera) mogą przerywać działanie pętli głównej, np. po pojawieniu się zbocza. Umożliwia to szybką reakcję na zdarzenie zewnętrzne.}
 
 ## Wymagania funkcjonalne
 
-Zmodyfikuj pętlę główną \lstinline{mainLoop()}, by spełnić poniższe wymagania.
-
-1. Po uruchomieniu dioda `LED1` powinna być zgaszona.
-1. Dioda `LED1` powinna zaświecać się po wciśnięciu przycisku `KEY1` i gasnąć po jego puszczeniu.
-
-\awesomebox[violet]{2pt}{\faBook}{violet}{Zapoznaj się z rejestrami \lstinline{PORT} (\textit{Data Register}) i~\lstinline{PIN} (\textit{Input Pins Address}), które pozwalają, odpowiednio, zapisywać stan wyjściowy i odczytywać stan wejściowy z danego portu.}
-
-\awesomebox[teal]{2pt}{\faCode}{teal}{Możesz użyć makra \lstinline{bit_is_clear()} do sprawdzenia, czy pin wejściowy jest w~stanie~\lstinline{0}.}
+1. Dioda `LED1` miga bez zmian.
+1. Dioda `LED2` reaguje natychmiast na wciśnięcia przycisku `KEY1`.
 
 # Zadanie rozszerzone
 
 ## Konfiguracja sprzętowa
 
-1. Podłącz diody `LED2`…`LED5` do pinów `PC1`…`PC4` portu `PORTC`.
-1. Podłącz przyciski `KEY2`…`KEY5` do pinów `PD4`…`PD7` portu `PORTD`.
+1. Podłącz diodę `LED3` do pinu `PC2` portu `PORTC`.
+
+## Modyfikacja programu
+
+Zmodyfikuj pętlę główną i obsługę przerwania tak, by po wciśnięciu przycisku była ustawiana zmienna, która zmieni w pętli głównej stan diody `LED3` na przeciwny.
+
+\awesomebox[teal]{2pt}{\faCode}{teal}{Do zmiany stanu diody na przeciwny możesz użyć funkcji \lstinline{ledToogle(PIN_LED_TOGGLE)}.}
+
+\awesomebox[teal]{2pt}{\faCode}{teal}{Pamiętaj o kwalifikatorze typu \lstinline{volatile}.}
 
 ## Wymagania funkcjonalne
 
-Zmodyfikuj pętlę główną \lstinline{mainLoop()}, by spełnić poniższe wymagania.
+1. Dioda `LED1` miga bez zmian.
+1. Dioda `LED2` reaguje natychmiast na wciśnięcia przycisku `KEY1`.
+1. Dioda `LED3` zmienia stan na przeciwny z opóźnieniem, wynikającym z działania pętli głównej.
 
-1. Po uruchomieniu diody `LED1`…`LED5` powinny być zgaszone.
-1. Dioda powinna zaświecać się po wciśnięciu przycisku o takim samym numerze i gasnąć po jego puszczeniu.
-1. Wciśnięcie kilku przycisków jednocześnie powinno zaświecać odpowiednie diody.
-
-\awesomebox[teal]{2pt}{\faCode}{teal}{Użyj operatora przesunięcia bitowego \lstinline{>>}, aby ominąć kłopotliwą różnicę w numeracji pinów dla przycisków i LED-ów.}
