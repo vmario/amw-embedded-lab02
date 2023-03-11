@@ -3,6 +3,9 @@
 MCU_TARGET_ATmega32A = atmega32a
 MCU_TARGET_ATmega1284P = atmega1284p
 
+FUSES_ATmega32A = -U hfuse:w:0xd9:m -U lfuse:w:0xef:m
+FUSES_ATmega1284P = -U hfuse:w:0xd9:m -U lfuse:w:0xef:m -U efuse:w:0xff:m
+
 MCU_TARGET = ${MCU_TARGET_${CONFIGURATION}}
 F_CPU = 11059200
 
@@ -45,7 +48,7 @@ LDFLAGS += -Wl,-Map=$(TARGET).map,--cref
 LDFLAGS += -Os -flto
 DEFS = -DF_CPU=$(F_CPU)ul
 
-SRCS = main.cpp
+SRCS = main.cpp gpio.cpp heartBit.cpp
 OBJS = $(addprefix $(OBJDIR)/,$(SRCS:.cpp=.o))
 DEPS = $(addprefix $(DEPDIR)/,$(SRCS:.cpp=.d))
 TARGET = $(TARGETDIR)/laboratory01
@@ -97,13 +100,16 @@ clean:
 	$(RMDIR) $(TARGETDIR)
 
 program: all
-	$(AVRDUDE) -c usbasp -p $(MCU_TARGET) -U flash:w:$(TARGET).hex:i
+	$(AVRDUDE) -c usbasp -p $(MCU_TARGET) -U flash:w:$(TARGET).hex:i ${FUSES_${CONFIGURATION}}
 
 erase:
 	$(AVRDUDE) -c usbasp -p $(MCU_TARGET) -e
 
 reset:
 	$(AVRDUDE) -c usbasp -p $(MCU_TARGET) -v
+
+fuses:
+	$(AVRDUDE) -c usbasp -p $(MCU_TARGET) ${FUSES_${CONFIGURATION}}
 
 HEXSIZE = $(SIZE) --target=$(FORMAT) $(TARGET).hex
 ELFSIZE = $(SIZE) -A $(TARGET).elf
