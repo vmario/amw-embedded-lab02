@@ -10,9 +10,9 @@ header-includes: |
   \usepackage{awesomebox}
 ...
 
-> Nothing is so obvious that it's obvious… The use of the word 'obvious' indicates the absence of a&nbsp;logical argument.
+> Remember, things take time.
 >
-> — _Errol Morris_
+> — _Piet Hein_
 
 # Cel ćwiczenia
 
@@ -74,3 +74,4 @@ Zmodyfikuj pętlę główną i obsługę przerwania tak, by po wciśnięciu przy
 1. Dioda `LED2` reaguje natychmiast na wciśnięcia przycisku `KEY1`.
 1. Dioda `LED3` zmienia stan na przeciwny z opóźnieniem, wynikającym z działania pętli głównej.
 
+\awesomebox[teal]{2pt}{\faCode}{teal}{W tym zadaniu wykorzystujemy przerwanie nie do tego, by zareagować natychmiast na zdarzenie, ale tylko do tego, by je zarejestrować i obsłużyć później w pętli głównej. W~ten sposób często obsługiwane są zdarzenia, które wymagają czasochłonnych operacji. Dzięki takiemu podejściu procesor nie utyka na dłuższy czas w obsłudze przerwania.}
